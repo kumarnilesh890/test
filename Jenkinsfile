@@ -2,8 +2,16 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = "us-east-1"
         S3_BUCKET  = "my-jenkins-artifacts-bucket-s3"
+        AWS_REGION = "ap-south-1"
+    }
+
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['apply', 'destroy'],
+            description: 'Select apply to create/update or destroy to delete resources'
+        )
     }
 
     stages {
@@ -22,34 +30,36 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
+        stage('Terraform Plan/Apply/Destroy') {
             steps {
                 dir('terraform') {
-                    sh 'terraform plan'
-                }
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                dir('terraform') {
-                    sh 'terraform apply -auto-approve'
+                    script {
+                        if (params.ACTION == 'apply') {
+                            sh 'terraform plan'
+                            sh 'terraform apply -auto-approve'
+                        } else if (params.ACTION == 'destroy') {
+                            sh 'terraform destroy -auto-approve'
+                        }
+                    }
                 }
             }
         }
 
         stage('Upload Terraform Code to S3') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
             steps {
-                sh '''
-                  aws s3 cp terraform/ s3://${S3_BUCKET}/terraform-code/ --recursive
-                '''
+                sh """
+                aws s3 cp ../terraform/ s3://${S3_BUCKET}/terraform-code/ --recursive
+                """
             }
         }
     }
 
     post {
         success {
-            echo "EC2 created and Terraform code uploaded to S3 🚀"
+            echo "Pipeline finished successfully 🎉"
         }
         failure {
             echo "Pipeline failed ❌"
