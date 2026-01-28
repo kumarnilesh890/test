@@ -50,9 +50,9 @@ pipeline {
                 expression { params.ACTION == 'apply' }
             }
             steps {
-                sh """
-                aws s3 cp ../terraform/ s3://${S3_BUCKET}/terraform-code/ --recursive
-                """
+                dir('terraform') {
+                    sh "aws s3 cp . s3://${S3_BUCKET}/terraform-code/ --recursive"
+                }
             }
         }
     }
