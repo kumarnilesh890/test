@@ -10,7 +10,7 @@ pipeline {
         choice(
             name: 'ACTION',
             choices: ['apply', 'destroy'],
-            description: 'Select apply to create/update or destroy to delete resources'
+            description: 'Select "apply" to create/update resources or "destroy" to delete them'
         )
     }
 
@@ -35,15 +35,13 @@ pipeline {
                 dir('terraform') {
                     script {
                         if (params.ACTION == 'apply') {
-                            echo "✅ Running Terraform Plan & Apply"
+                            echo "Running Terraform plan and apply..."
                             sh 'terraform plan'
                             sh 'terraform apply -auto-approve'
                         } else if (params.ACTION == 'destroy') {
-                            echo "⚠️ Planning for Terraform Destroy"
-                            sh 'terraform plan -destroy'
-                            // Optional confirmation before destroy
-                            input message: 'Are you sure you want to destroy all resources?', ok: 'Yes, destroy!'
-                            echo "🚨 Destroying resources"
+                            // Manual confirmation in Jenkins UI
+                            input message: "⚠️ Are you sure you want to destroy all resources?"
+                            echo "Destroying Terraform resources..."
                             sh 'terraform destroy -auto-approve'
                         }
                     }
@@ -57,7 +55,6 @@ pipeline {
             }
             steps {
                 dir('terraform') {
-                    echo "Uploading Terraform code to S3..."
                     sh "aws s3 cp . s3://${S3_BUCKET}/terraform-code/ --recursive"
                 }
             }
