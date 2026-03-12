@@ -45,15 +45,6 @@ pipeline {
             }
         }
 
-        stage('Confirm Destroy') {
-            when {
-                expression { params.ACTION == 'destroy' }
-            }
-            steps {
-                input message: "⚠️ Are you sure you want to destroy all Terraform resources?", ok: "Yes, Destroy"
-            }
-        }
-
         stage('Terraform Destroy') {
             when {
                 expression { params.ACTION == 'destroy' }
