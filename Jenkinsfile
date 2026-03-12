@@ -30,21 +30,38 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan/Apply/Destroy') {
+        stage('Terraform Apply') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
             steps {
                 dir('terraform') {
-                    script {
-                        if (params.ACTION == 'apply') {
-                            echo "Running Terraform plan and apply..."
-                            sh 'terraform plan'
-                            sh 'terraform apply -auto-approve'
-                        } else if (params.ACTION == 'destroy') {
-                            // Manual confirmation in Jenkins UI
-                            input message: "⚠️ Are you sure you want to destroy all resources?"
-                            echo "Destroying Terraform resources..."
-                            sh 'terraform destroy -auto-approve'
-                        }
-                    }
+                    echo "Running Terraform plan..."
+                    sh 'terraform plan'
+
+                    echo "Applying Terraform changes..."
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+
+        stage('Confirm Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                input message: "⚠️ Are you sure you want to destroy all Terraform resources?", ok: "Yes, Destroy"
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                dir('terraform') {
+                    echo "Destroying Terraform resources..."
+                    sh 'terraform destroy -auto-approve'
                 }
             }
         }
