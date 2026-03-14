@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    triggers {
-        cron('H/30 * * * *')   // Runs every 30 minutes
-    }
+    // triggers {
+    //     cron('H/30 * * * *')   // Runs every 30 minutes
+    // }
 
     environment {
         S3_BUCKET  = "my-jenkins-artifacts-bucket-s3"
